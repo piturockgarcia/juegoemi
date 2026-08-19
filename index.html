@@ -2,13 +2,24 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>JuegoEMI</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="game-container">
     <canvas id="game" aria-label="JuegoEMI"></canvas>
+    <div id="touch-controls" aria-label="Controles táctiles">
+      <div class="touch-left">
+        <button data-key="arrowleft" aria-label="Izquierda">◀</button>
+        <button data-key="arrowright" aria-label="Derecha">▶</button>
+      </div>
+      <div class="touch-right">
+        <button data-key="arrowup" aria-label="Saltar">▲</button>
+        <button data-key="z" aria-label="Golpear">Z</button>
+        <button data-key="x" aria-label="Disparar">X</button>
+      </div>
+    </div>
   </main>
   <script src="game.js"></script>
 </body>
