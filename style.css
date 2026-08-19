@@ -4,6 +4,9 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #111;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 body {
@@ -14,6 +17,7 @@ body {
 }
 
 #game-container {
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -28,4 +32,48 @@ canvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   background: #202020;
+}
+
+#touch-controls {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.touch-left,
+.touch-right {
+  display: flex;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+#touch-controls button {
+  width: 68px;
+  height: 68px;
+  border: 2px solid rgba(255,255,255,.65);
+  border-radius: 14px;
+  background: rgba(0,0,0,.45);
+  color: white;
+  font-size: 25px;
+  font-weight: bold;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+#touch-controls button:active {
+  background: rgba(255,255,255,.28);
+  transform: scale(.94);
+}
+
+@media (pointer: fine) {
+  #touch-controls { opacity: .35; }
+}
+
+@media (orientation: portrait) {
+  #touch-controls { opacity: .75; }
 }
