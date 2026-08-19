@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JuegoEMI - Sprite Lab</title>
+<style>
+body{margin:0;background:#111;color:#eee;font-family:monospace;padding:20px}
+h1{margin-top:0}.sprite{border:1px solid #555;margin:16px 0;padding:12px;background:#1c1c1c}
+img{display:block;max-width:100%;height:auto;image-rendering:pixelated;background:repeating-conic-gradient(#333 0 25%,#222 0 50%) 50%/20px 20px}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h1>JuegoEMI — Sprite Lab</h1>
+<p>Vista de diagnóstico de los sprites originales. No modifica las imágenes.</p>
+<div id="sprites"></div>
+<script>
+const names=['personaje','parada','caminar','bailando','salto','disparar','golpear','herido'];
+const root=document.getElementById('sprites');
+for(const name of names){
+  const box=document.createElement('section'); box.className='sprite';
+  const title=document.createElement('h2'); title.textContent=name+'.png'; box.appendChild(title);
+  const img=new Image(); img.src=name+'.png';
+  const info=document.createElement('small'); info.textContent='cargando...';
+  img.onload=()=>info.textContent=`${img.naturalWidth} × ${img.naturalHeight} px`;
+  img.onerror=()=>info.textContent='No se pudo cargar';
+  box.append(img,info); root.appendChild(box);
+}
+</script>
+</body>
+</html>
