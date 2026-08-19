@@ -3,59 +3,29 @@ const ctx = canvas.getContext('2d');
 const GAME_WIDTH = 960, GAME_HEIGHT = 540;
 canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
 
-const SPRITES = { idle:'parada.png', walk:'caminar.png', jump:'salto.png', shoot:'disparar.png', punch:'golpear.png', hurt:'herido.png', dance:'bailando.png', character:'personaje.png' };
+const SPRITES = { idle:'parada.png', walk:'caminar.png', jump:'salto.png', shoot:'disparar.png', punch:'golpear.png', hurt:'herido.png', dance:'bailando.png' };
 const images = {};
 for (const [name, src] of Object.entries(SPRITES)) { const image = new Image(); image.src = src; images[name] = image; }
+const animations = { idle:{frames:1,fps:2}, walk:{frames:4,fps:9}, jump:{frames:1,fps:1}, shoot:{frames:1,fps:8}, punch:{frames:1,fps:10}, hurt:{frames:1,fps:6}, dance:{frames:4,fps:7} };
 
-const animations = {
-  idle:{frames:1,fps:2}, walk:{frames:4,fps:9}, jump:{frames:1,fps:1},
-  shoot:{frames:1,fps:8}, punch:{frames:1,fps:10}, hurt:{frames:1,fps:6}, dance:{frames:4,fps:7}
-};
-
-const player = {x:120,y:400,width:72,height:96,speed:4,vy:0,jumpPower:-12,grounded:true,direction:1,state:'idle',frame:0,frameTimer:0,actionTimer:0};
-const keys = new Set();
-
-window.addEventListener('keydown', e => { keys.add(e.key.toLowerCase()); if(['arrowleft','arrowright','arrowup',' ','z','x'].includes(e.key.toLowerCase())) e.preventDefault(); });
-window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
-
-// Controles táctiles: mantienen la tecla virtual mientras el dedo está apoyado.
-document.querySelectorAll('#touch-controls button').forEach(button => {
-  const key = button.dataset.key;
-  const press = e => { e.preventDefault(); keys.add(key); button.setPointerCapture?.(e.pointerId); };
-  const release = e => { e.preventDefault(); keys.delete(key); };
-  button.addEventListener('pointerdown', press);
-  button.addEventListener('pointerup', release);
-  button.addEventListener('pointercancel', release);
-  button.addEventListener('pointerleave', release);
-});
-
-function resizeCanvas(){ const scale=Math.min(innerWidth/GAME_WIDTH,innerHeight/GAME_HEIGHT); canvas.style.width=`${GAME_WIDTH*scale}px`; canvas.style.height=`${GAME_HEIGHT*scale}px`; }
-function setState(state){ if(player.state!==state){ player.state=state; player.frame=0; player.frameTimer=0; } }
-function updateAnimation(){ const a=animations[player.state]||animations.idle; if(a.frames<=1)return; player.frameTimer++; const ticks=Math.max(1,Math.round(60/a.fps)); if(player.frameTimer>=ticks){player.frameTimer=0;player.frame=(player.frame+1)%a.frames;} }
-
-function update(){
-  const left=keys.has('arrowleft')||keys.has('a'), right=keys.has('arrowright')||keys.has('d'), jumping=keys.has('arrowup')||keys.has('w')||keys.has(' ');
-  if(left){player.x-=player.speed;player.direction=-1;} if(right){player.x+=player.speed;player.direction=1;}
-  if(jumping&&player.grounded){player.vy=player.jumpPower;player.grounded=false;}
-  player.vy+=0.55; player.y+=player.vy;
-  const floor=472; if(player.y+player.height>=floor){player.y=floor-player.height;player.vy=0;player.grounded=true;}
-  player.x=Math.max(0,Math.min(GAME_WIDTH-player.width,player.x));
-  if(keys.has('z')){setState('punch');player.actionTimer=12;} else if(keys.has('x')){setState('shoot');player.actionTimer=12;} else if(!player.grounded)setState('jump'); else if(player.actionTimer>0)player.actionTimer--; else if(left||right)setState('walk'); else setState('idle');
-  updateAnimation();
-}
-
-function drawSprite(){
-  const image=images[player.state]||images.idle, anim=animations[player.state]||animations.idle;
-  if(!image.complete||!image.naturalWidth){ctx.fillStyle='#d8a25e';ctx.fillRect(player.x,player.y,player.width,player.height);return;}
-  const frameWidth=image.naturalWidth/anim.frames, frameHeight=image.naturalHeight, sx=player.frame*frameWidth;
-  ctx.save();
-  if(player.direction<0){ctx.translate(player.x+player.width,player.y);ctx.scale(-1,1);ctx.drawImage(image,sx,0,frameWidth,frameHeight,0,0,player.width,player.height);}
-  else ctx.drawImage(image,sx,0,frameWidth,frameHeight,player.x,player.y,player.width,player.height);
-  ctx.restore();
-}
-
-function draw(){
-  ctx.clearRect(0,0,GAME_WIDTH,GAME_HEIGHT); ctx.fillStyle='#172033';ctx.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);ctx.fillStyle='#293b24';ctx.fillRect(0,472,GAME_WIDTH,GAME_HEIGHT-472);
-  ctx.fillStyle='#e8e8e8';ctx.font='28px monospace';ctx.fillText('JUEGOEMI',30,45);drawSprite();
-}
-function loop(){update();draw();requestAnimationFrame(loop);} window.addEventListener('resize',resizeCanvas);resizeCanvas();loop();
+const level = { width:3600, platforms:[
+ {x:0,y:472,w:900,h:68},{x:1020,y:472,w:700,h:68},{x:1840,y:472,w:850,h:68},{x:2820,y:472,w:780,h:68},
+ {x:430,y:380,w:180,h:22},{x:760,y:320,w:180,h:22},{x:1260,y:375,w:190,h:22},{x:1550,y:300,w:190,h:22},
+ {x:2050,y:370,w:180,h:22},{x:2390,y:315,w:210,h:22},{x:3000,y:360,w:190,h:22} ] };
+const player = {x:120,y:350,width:72,height:96,speed:4,vy:0,jumpPower:-12,grounded:false,direction:1,state:'idle',frame:0,frameTimer:0,actionTimer:0};
+const camera={x:0}; const keys=new Set();
+window.addEventListener('keydown',e=>{keys.add(e.key.toLowerCase());if(['arrowleft','arrowright','arrowup',' ','z','x'].includes(e.key.toLowerCase()))e.preventDefault();});
+window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+document.querySelectorAll('#touch-controls button').forEach(button=>{const key=button.dataset.key;const press=e=>{e.preventDefault();keys.add(key);button.setPointerCapture?.(e.pointerId)};const release=e=>{e.preventDefault();keys.delete(key)};button.addEventListener('pointerdown',press);button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('pointerleave',release)});
+function resizeCanvas(){const scale=Math.min(innerWidth/GAME_WIDTH,innerHeight/GAME_HEIGHT);canvas.style.width=`${GAME_WIDTH*scale}px`;canvas.style.height=`${GAME_HEIGHT*scale}px`}
+function setState(s){if(player.state!==s){player.state=s;player.frame=0;player.frameTimer=0}}
+function updateAnimation(){const a=animations[player.state]||animations.idle;if(a.frames<=1)return;player.frameTimer++;const ticks=Math.max(1,Math.round(60/a.fps));if(player.frameTimer>=ticks){player.frameTimer=0;player.frame=(player.frame+1)%a.frames}}
+function move(){const left=keys.has('arrowleft')||keys.has('a'),right=keys.has('arrowright')||keys.has('d');if(left){player.x-=player.speed;player.direction=-1}if(right){player.x+=player.speed;player.direction=1}return{left,right}}
+function collide(){const oldBottom=player.y+player.height-player.vy;player.grounded=false;for(const p of level.platforms){const horizontal=player.x+player.width>p.x&&player.x<p.x+p.w;const landing=player.vy>=0&&oldBottom<=p.y&&player.y+player.height>=p.y;if(horizontal&&landing){player.y=p.y-player.height;player.vy=0;player.grounded=true;break}}}
+function update(){const m=move();const jump=keys.has('arrowup')||keys.has('w')||keys.has(' ');if(jump&&player.grounded){player.vy=player.jumpPower;player.grounded=false}player.vy+=.55;player.y+=player.vy;collide();player.x=Math.max(0,Math.min(level.width-player.width,player.x));if(player.y>GAME_HEIGHT+150){player.x=120;player.y=250;player.vy=0}
+if(keys.has('z')){setState('punch');player.actionTimer=12}else if(keys.has('x')){setState('shoot');player.actionTimer=12}else if(!player.grounded)setState('jump');else if(player.actionTimer>0)player.actionTimer--;else if(m.left||m.right)setState('walk');else setState('idle');updateAnimation();
+const target=player.x-GAME_WIDTH*.42;camera.x+=(target-camera.x)*.12;camera.x=Math.max(0,Math.min(level.width-GAME_WIDTH,camera.x))}
+function drawBackground(){ctx.fillStyle='#172033';ctx.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);ctx.fillStyle='#202d45';for(let x=-((camera.x*.2)%180)-180;x<GAME_WIDTH+180;x+=180)ctx.fillRect(x,150,100,322);ctx.fillStyle='#293b24';for(const p of level.platforms)ctx.fillRect(p.x-camera.x,p.y,p.w,p.h);ctx.fillStyle='#6d6b45';for(const p of level.platforms)ctx.fillRect(p.x-camera.x,p.y,p.w,6)}
+function drawSprite(){const image=images[player.state]||images.idle,anim=animations[player.state]||animations.idle;if(!image.complete||!image.naturalWidth){ctx.fillStyle='#d8a25e';ctx.fillRect(player.x-camera.x,player.y,player.width,player.height);return}const fw=image.naturalWidth/anim.frames,fh=image.naturalHeight,sx=player.frame*fw,dx=player.x-camera.x;ctx.save();if(player.direction<0){ctx.translate(dx+player.width,player.y);ctx.scale(-1,1);ctx.drawImage(image,sx,0,fw,fh,0,0,player.width,player.height)}else ctx.drawImage(image,sx,0,fw,fh,dx,player.y,player.width,player.height);ctx.restore()}
+function drawHUD(){ctx.fillStyle='#e8e8e8';ctx.font='22px monospace';ctx.fillText('JUEGOEMI',24,34);ctx.fillText('SECTOR 01',24,62);ctx.fillText(`POS ${Math.floor(player.x)}`,760,34)}
+function draw(){ctx.clearRect(0,0,GAME_WIDTH,GAME_HEIGHT);drawBackground();drawSprite();drawHUD()}function loop(){update();draw();requestAnimationFrame(loop)}window.addEventListener('resize',resizeCanvas);resizeCanvas();loop();
