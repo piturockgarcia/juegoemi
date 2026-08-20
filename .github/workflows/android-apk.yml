@@ -1,0 +1,44 @@
+name: Build JuegoEMI APK
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare game assets
+        run: |
+          mkdir -p android/app/src/main/assets
+          cp index.html style.css game.js android/app/src/main/assets/
+          find . -maxdepth 1 -type f -iname '*.png' -exec cp {} android/app/src/main/assets/ \;
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JuegoEMI-beta-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
